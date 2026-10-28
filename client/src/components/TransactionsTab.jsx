@@ -13,12 +13,21 @@ export default function TransactionsTab({ onTransactionChange, showToast }) {
     return `${year}-${month}-${day}`;
   };
 
-  const todayStr = getTodayStr();
+  // Format first day of current month in local YYYY-MM-01
+  const getMonthStartStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
+  };
 
-  // State: Initialized to TODAY'S date only as requested by user
-  const [startDate, setStartDate] = useState(todayStr);
+  const todayStr = getTodayStr();
+  const monthStartStr = getMonthStartStr();
+
+  // State: Defaulted to THIS MONTH
+  const [startDate, setStartDate] = useState(monthStartStr);
   const [endDate, setEndDate] = useState(todayStr);
-  const [activePreset, setActivePreset] = useState('today');
+  const [activePreset, setActivePreset] = useState('month');
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ALL');
