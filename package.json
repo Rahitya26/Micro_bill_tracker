@@ -1,0 +1,35 @@
+{
+  "name": "upi-payment-tracker",
+  "version": "1.0.0",
+  "description": "Automated UPI Payment Tracker with PostgreSQL, Express, Habit Analytics, and Expense Predictions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "vercel-build": "npm --prefix client install && npm --prefix client run build",
+    "clear": "node clear-data.js",
+    "ip": "node get-ip.js"
+  },
+  "keywords": [
+    "upi",
+    "payment-tracker",
+    "expense-tracker",
+    "postgresql",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "imap-simple": "^5.1.0",
+    "mailparser": "^3.7.2",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "pg": "^8.13.1"
+  }
+}

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Flow - Automated UPI Payment Tracker & Habit Analytics</title>
+    <meta name="description" content="Automated, free UPI payment tracking, predictive expense projection, spending habit analysis, and smart budgeting with PostgreSQL and Express.">
+    
+    <!-- Design & Typography -->
+    <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Chart.js & Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="nav-container">
+            <a href="/" class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="zap"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>UPI Flow</h1>
+                    <p>Automated Financial Tracker</p>
+                </div>
+            </a>
+
+            <div class="nav-status">
+                <div id="db-status-pill" class="db-pill" onclick="openDbModal()">
+                    <span class="status-dot"></span>
+                    <span id="db-status-text">Checking Database...</span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button id="btn-open-simulator" class="btn btn-secondary" onclick="openSimulatorModal()">
+                    <i data-lucide="smartphone"></i> UPI Simulator
+                </button>
+                <button id="btn-sync-email" class="btn btn-secondary" onclick="triggerEmailSync()">
+                    <i data-lucide="mail"></i> Sync Emails
+                </button>
+                <button id="btn-quick-add" class="btn btn-primary" onclick="openAddModal()">
+                    <i data-lucide="plus"></i> Add Payment
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-wrapper">
+
+        <!-- PostgreSQL Alert Banner (If credentials needed) -->
+        <div id="db-alert-banner" class="alert-banner">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <i data-lucide="alert-circle"></i>
+                <span id="db-alert-message">PostgreSQL is not connected yet. Please set your PostgreSQL password in <code>.env</code>.</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="openDbModal()">Configure Database</button>
+        </div>
+
+        <!-- Prediction & Spend Pace Hero Banner -->
+        <section class="prediction-hero" id="prediction-section">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <span id="prediction-badge" class="prediction-badge">Analyzing Pace...</span>
+                        <span id="month-elapsed-text" style="font-size: 0.8rem; color: var(--text-muted);">Day 27 of 31</span>
+                    </div>
+                    <h2>
+                        <span id="hero-headline">Spend Forecast & Projection</span>
+                    </h2>
+                    <p id="hero-message" class="hero-subtitle">
+                        Tracking daily burn rate across all UPI payments to project your total month-end expenditure.
+                    </p>
+
+                    <div class="runrate-metrics">
+                        <div class="metric-pill">
+                            <div class="label">Daily Burn Rate</div>
+                            <div class="value" id="val-daily-avg">₹0</div>
+                            <div class="sub">Current pace per day</div>
+                        </div>
+                        <div class="metric-pill">
+                            <div class="label">Projected Month-End</div>
+                            <div class="value" id="val-projected-spend">₹0</div>
+                            <div class="sub" id="val-projected-diff">vs ₹30,000 budget</div>
+                        </div>
+                        <div class="metric-pill">
+                            <div class="label">Remaining Budget</div>
+                            <div class="value" id="val-remaining-budget">₹0</div>
+                            <div class="sub" id="val-days-left">Available to spend</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="budget-bar-wrap">
+                        <div class="budget-bar-header">
+                            <span style="font-weight: 600;">Monthly Budget Consumption</span>
+                            <span id="budget-progress-percent" style="font-weight: 700; color: var(--primary);">0%</span>
+                        </div>
+                        <div class="budget-progress-track">
+                            <div id="budget-progress-fill" class="budget-progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="hero-visual-footer">
+                        <div>
+                            <span style="color: var(--text-muted);">Spent: </span>
+                            <strong id="val-hero-spent">₹0</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-muted);">Budget: </span>
+                            <strong id="val-hero-budget">₹30,000</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Pace Comparison:</span>
+                        <span id="burn-rate-indicator" style="font-size: 0.82rem; font-weight: 600; color: #34d399;">Calculated in real-time</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Debits</span>
+                    <div class="kpi-icon-wrap" style="color: #f87171;"><i data-lucide="arrow-up-right"></i></div>
+                </div>
+                <div class="kpi-amount" id="kpi-total-spent">₹0</div>
+                <div class="kpi-desc" id="kpi-debit-count">0 transactions this month</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Credits / Income</span>
+                    <div class="kpi-icon-wrap" style="color: #34d399;"><i data-lucide="arrow-down-left"></i></div>
+                </div>
+                <div class="kpi-amount" id="kpi-total-received">₹0</div>
+                <div class="kpi-desc" id="kpi-credit-count">Refunds & transfers</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Small Taps (< ₹100)</span>
+                    <div class="kpi-icon-wrap" style="color: #f59e0b;"><i data-lucide="coffee"></i></div>
+                </div>
+                <div class="kpi-amount" id="kpi-micro-total">₹0</div>
+                <div class="kpi-desc" id="kpi-micro-count">0 micro payments (chai/snacks)</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Weekend vs Weekday</span>
+                    <div class="kpi-icon-wrap" style="color: #8b5cf6;"><i data-lucide="calendar"></i></div>
+                </div>
+                <div class="kpi-amount" id="kpi-weekend-stat">1.0x</div>
+                <div class="kpi-desc" id="kpi-weekend-desc">Weekend spending multiplier</div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('analytics')">
+                <i data-lucide="layout-dashboard"></i> Overview & Habits
+            </button>
+            <button class="tab-btn" onclick="switchTab('tips')">
+                <i data-lucide="lightbulb"></i> Smart Tips & Advice
+                <span id="tips-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 9999px;">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('transactions')">
+                <i data-lucide="receipt"></i> Transaction History
+            </button>
+            <button class="tab-btn" onclick="switchTab('settings')">
+                <i data-lucide="sliders"></i> Budget & Settings
+            </button>
+        </nav>
+
+        <!-- TAB 1: OVERVIEW & HABITS -->
+        <div id="tab-analytics" class="tab-pane active">
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Daily Spending Timeline</h3>
+                            <p class="card-subtitle">Month-to-date daily UPI debit trend (₹)</p>
+                        </div>
+                    </div>
+                    <div style="height: 290px; width: 100%;">
+                        <canvas id="dailySpendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Category Breakdown</h3>
+                            <p class="card-subtitle">Where your UPI money flows</p>
+                        </div>
+                    </div>
+                    <div style="height: 290px; position: relative;">
+                        <canvas id="categoryDonutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Habits & Patterns Grid -->
+            <div class="habits-grid">
+                <div class="habit-card">
+                    <div class="habit-icon-title" style="color: #06b6d4;">
+                        <i data-lucide="clock"></i> Time-of-Day Pattern
+                    </div>
+                    <div style="height: 180px;">
+                        <canvas id="timeSlotChart"></canvas>
+                    </div>
+                    <p class="habit-text" id="habit-time-summary" style="margin-top: 0.75rem;">
+                        Analyzing morning coffee, afternoon lunches, and late night food delivery trends.
+                    </p>
+                </div>
+
+                <div class="habit-card">
+                    <div class="habit-icon-title" style="color: #ec4899;">
+                        <i data-lucide="repeat"></i> Detected Subscriptions
+                    </div>
+                    <div id="subscriptions-container">
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning for recurring monthly charges like Netflix, Spotify, Gym, broadband...</p>
+                    </div>
+                </div>
+
+                <div class="habit-card">
+                    <div class="card-header" style="margin-bottom: 0.5rem;">
+                        <div class="habit-icon-title" style="color: #10b981; margin-bottom: 0;">
+                            <i data-lucide="store"></i> Top Merchants
+                        </div>
+                    </div>
+                    <div class="merchant-list" id="top-merchants-list">
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">No merchant data yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SMART TIPS & FINANCIAL ADVICE -->
+        <div id="tab-tips" class="tab-pane">
+            <div style="margin-bottom: 1.5rem;">
+                <h2>Smart Tips & Habit Insights</h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Algorithmic observations tailored to your actual UPI spending habits to curb leaks and grow your savings.
+                </p>
+            </div>
+            <div class="tips-grid" id="tips-container">
+                <!-- Dynamically populated tips -->
+            </div>
+        </div>
+
+        <!-- TAB 3: TRANSACTION HISTORY -->
+        <div id="tab-transactions" class="tab-pane">
+            <div class="table-filter-bar">
+                <div class="search-input-wrap">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="tx-search-input" class="search-input" placeholder="Search by merchant, UPI ref, VPA, description..." oninput="handleSearch()">
+                </div>
+
+                <select id="tx-category-filter" class="filter-select" onchange="fetchTransactions()">
+                    <option value="ALL">All Categories</option>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Groceries & Essentials">Groceries & Essentials</option>
+                    <option value="Shopping & E-Commerce">Shopping & E-Commerce</option>
+                    <option value="Bills & Utilities">Bills & Utilities</option>
+                    <option value="Travel & Commute">Travel & Commute</option>
+                    <option value="Entertainment & Subs">Entertainment & Subs</option>
+                    <option value="Health & Wellness">Health & Wellness</option>
+                    <option value="Transfers & Rent">Transfers & Rent</option>
+                    <option value="Others & General">Others & General</option>
+                </select>
+
+                <select id="tx-type-filter" class="filter-select" onchange="fetchTransactions()">
+                    <option value="ALL">All Types</option>
+                    <option value="DEBIT">Debits Only</option>
+                    <option value="CREDIT">Credits / Refunds</option>
+                </select>
+
+                <button class="btn btn-secondary" onclick="exportCsv()">
+                    <i data-lucide="download"></i> Export CSV
+                </button>
+            </div>
+
+            <div class="table-card">
+                <table class="tx-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Merchant & UPI Details</th>
+                            <th>Category</th>
+                            <th>Bank</th>
+                            <th>Source</th>
+                            <th style="text-align: right;">Amount</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-table-body">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                Loading transactions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+        <!-- TAB 5: BUDGET & SETTINGS -->
+        <div id="tab-settings" class="tab-pane">
+            <div style="max-width: 650px;">
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">Monthly Budget & Salary Cycle</h3>
+                    </div>
+                    <form id="settings-form" onsubmit="saveSettings(event)">
+                        <div class="form-group">
+                            <label for="input-monthly-budget">Monthly Budget Target (₹)</label>
+                            <input type="number" id="input-monthly-budget" class="form-input" placeholder="e.g. 30000" min="1000" step="500" required>
+                            <span style="font-size: 0.76rem; color: var(--text-muted);">Used to compute daily burn rate and safe daily targets.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="input-salary-date">Salary / Cycle Reset Day</label>
+                            <input type="number" id="input-salary-date" class="form-input" min="1" max="31" value="1" required>
+                            <span style="font-size: 0.76rem; color: var(--text-muted);">Day of month when your income arrives and budget resets.</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="save"></i> Save Budget Settings
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Database Diagnostics Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">PostgreSQL Database Info</h3>
+                        <span id="db-settings-status-badge" class="prediction-badge">Connected</span>
+                    </div>
+                    <div id="db-settings-details" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+                        Loading database details...
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="reconnectDb()">
+                            <i data-lucide="refresh-cw"></i> Reconnect Database
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reset / Clear Data Card -->
+                <div class="card" style="margin-top: 1.5rem; border-color: rgba(244, 63, 94, 0.3);">
+                    <div class="card-header">
+                        <h3 class="card-title" style="color: #fb7185; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i> Reset & Clear Data
+                        </h3>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Wipe all transactions and sync logs from PostgreSQL to start fresh for testing at any time.
+                    </p>
+                    <button class="btn btn-secondary btn-sm" style="color: #fb7185; border-color: rgba(244, 63, 94, 0.3);" onclick="clearAllData()">
+                        <i data-lucide="trash-2"></i> Clear All Transactions
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: ADD PAYMENT MANUALLY -->
+    <div id="modal-add" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Add UPI Payment</h3>
+                <button class="modal-close" onclick="closeModal('modal-add')">&times;</button>
+            </div>
+            <form onsubmit="handleAddPayment(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="add-amount">Amount (₹)</label>
+                        <input type="number" id="add-amount" class="form-input" placeholder="250.00" step="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-type">Type</label>
+                        <select id="add-type" class="form-input">
+                            <option value="DEBIT">Debit (Spent)</option>
+                            <option value="CREDIT">Credit (Received/Refund)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-merchant">Merchant / Payee Name</label>
+                    <input type="text" id="add-merchant" class="form-input" placeholder="e.g. Swiggy, Chai Point, Uber, Landlord" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="add-category">Category</label>
+                        <select id="add-category" class="form-input">
+                            <option value="">Auto-Detect from Merchant</option>
+                            <option value="Food & Dining">Food & Dining</option>
+                            <option value="Groceries & Essentials">Groceries & Essentials</option>
+                            <option value="Shopping & E-Commerce">Shopping & E-Commerce</option>
+                            <option value="Bills & Utilities">Bills & Utilities</option>
+                            <option value="Travel & Commute">Travel & Commute</option>
+                            <option value="Entertainment & Subs">Entertainment & Subs</option>
+                            <option value="Health & Wellness">Health & Wellness</option>
+                            <option value="Transfers & Rent">Transfers & Rent</option>
+                            <option value="Others & General">Others & General</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-bank">Bank / App</label>
+                        <input type="text" id="add-bank" class="form-input" placeholder="e.g. HDFC, Google Pay, SBI">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-desc">Notes / Description (Optional)</label>
+                    <input type="text" id="add-desc" class="form-input" placeholder="e.g. Dinner with friends">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: INTERACTIVE UPI SIMULATOR -->
+    <div id="modal-simulator" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Live Bank Alert Simulator</h3>
+                <button class="modal-close" onclick="closeModal('modal-simulator')">&times;</button>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.25rem;">
+                Pick a bank format and test how the parser instantly digests SMS alerts, extracts the UPI UTR, and visualizes the spend:
+            </p>
+
+            <form onsubmit="handleSimulatorSubmit(event)">
+                <div class="form-group">
+                    <label>Select Bank / App Format</label>
+                    <select id="sim-bank" class="form-input">
+                        <option value="bob">Bank of Baroda (Rs.XX Dr. from A/C ... and Cr. to ... Ref:... -BOB)</option>
+                        <option value="hdfc">HDFC Bank (Rs XX debited ... VPA ... UPI Ref)</option>
+                        <option value="sbi">State Bank of India (A/C XX debited by Rs XX transfer to ... via UPI)</option>
+                        <option value="icici">ICICI Bank (Acct XX debited ... UPI:Ref-Merchant-VPA)</option>
+                        <option value="axis">Axis Bank (INR XX debited ... via UPI. Ref ... Info: ...)</option>
+                        <option value="kotak">Kotak Mahindra Bank (Sent Rs XX from AC ... to VPA ... Ref ...)</option>
+                        <option value="gpay">Google Pay (Paid Rs XX to ... on Google Pay ... UPI Ref)</option>
+                        <option value="phonepe">PhonePe (Paid Rs XX to ... via PhonePe)</option>
+                        <option value="paytm">Paytm UPI (Paid Rs XX to ... via Paytm UPI)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Merchant / Payee</label>
+                        <input type="text" id="sim-merchant" class="form-input" value="Swiggy" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (₹)</label>
+                        <input type="number" id="sim-amount" class="form-input" value="340" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Merchant UPI VPA (Optional)</label>
+                    <input type="text" id="sim-vpa" class="form-input" value="swiggy@icici">
+                </div>
+
+                <div id="sim-result-box" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); font-size: 0.82rem; color: #34d399;">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-simulator')">Close</button>
+                    <button type="submit" class="btn btn-accent">
+                        <i data-lucide="zap"></i> Simulate Incoming UPI Alert
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: POSTGRESQL CREDENTIALS & SETUP -->
+    <div id="modal-db" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>PostgreSQL Connection Setup</h3>
+                <button class="modal-close" onclick="closeModal('modal-db')">&times;</button>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;">
+                <p style="margin-bottom: 0.75rem;">
+                    PostgreSQL service (<code>postgresql-x64-18</code>) is running locally on your machine.
+                </p>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+                    <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">To connect:</p>
+                    <ol style="margin-left: 1.25rem;">
+                        <li>Open the file <code>d:/PaymentTracker/.env</code></li>
+                        <li>Update <code>PGPASSWORD=your_password</code> with your PostgreSQL password</li>
+                        <li>Click the <strong>Test & Reconnect</strong> button below!</li>
+                    </ol>
+                </div>
+                <div id="db-modal-status-text" style="margin-bottom: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;"></div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-db')">Close</button>
+                <button type="button" class="btn btn-primary" onclick="reconnectDb()">
+                    <i data-lucide="refresh-cw"></i> Test & Reconnect
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Application Javascript Modules -->
+    <script src="/js/api.js"></script>
+    <script src="/js/charts.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
