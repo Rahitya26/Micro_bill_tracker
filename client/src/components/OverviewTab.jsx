@@ -426,85 +426,7 @@ export default function OverviewTab({ analytics, onWishlistUpdated, showToast })
         </div>
       </div>
 
-      {/* Auto-Fading Smart Tips Banner */}
-      {tips.length > 0 && activeTip && (
-        <div 
-          className="glass-card smart-tip-ticker"
-          style={{ 
-            marginBottom: '1.5rem', 
-            borderLeft: `4px solid ${getTipAccentColor(activeTip.type)}`,
-            padding: '1rem 1.25rem'
-          }}
-          onMouseEnter={() => setIsTipsPaused(true)}
-          onMouseLeave={() => setIsTipsPaused(false)}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Lightbulb size={16} style={{ color: '#fbbf24', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-cyan)' }}>
-                Smart AI Financial Tip
-              </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                ({currentTipIndex + 1} of {tips.length})
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <div className="tip-dots">
-                {tips.map((_, idx) => (
-                  <span 
-                    key={idx}
-                    className={`tip-dot ${idx === currentTipIndex ? 'active' : ''}`}
-                    onClick={() => setCurrentTipIndex(idx)}
-                    title={`Jump to Tip ${idx + 1}`}
-                  />
-                ))}
-              </div>
-              <button 
-                type="button" 
-                className="btn-icon btn-secondary" 
-                style={{ width: '24px', height: '24px' }} 
-                onClick={handlePrevTip}
-                title="Previous Tip"
-              >
-                <ChevronLeft size={13} />
-              </button>
-              <button 
-                type="button" 
-                className="btn-icon btn-secondary" 
-                style={{ width: '24px', height: '24px' }} 
-                onClick={handleNextTip}
-                title="Next Tip"
-              >
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          </div>
-
-          <div 
-            className="tip-content-fade"
-            style={{ 
-              opacity: isTipFading ? 0 : 1, 
-              transform: isTipFading ? 'translateY(4px)' : 'translateY(0)',
-              transition: 'opacity 0.28s ease, transform 0.28s ease'
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
-              {activeTip.title}
-            </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: '0.4rem' }}>
-              {activeTip.message}
-            </div>
-            {activeTip.action && (
-              <div style={{ fontSize: '0.78rem', color: '#38bdf8', background: 'rgba(6, 182, 212, 0.08)', padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', display: 'inline-block' }}>
-                💡 <strong>Action:</strong> {activeTip.action}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* KPI Metrics Grid */}
+      {/* 2. KPI Metrics Grid (Spent this month, daily burn rate, micro spends) */}
       <div className="metrics-grid">
         <div className="glass-card metric-card">
           <div className="metric-label">
@@ -536,7 +458,75 @@ export default function OverviewTab({ analytics, onWishlistUpdated, showToast })
         </div>
       </div>
 
-      {/* Charts Grid with MoM Trajectory Toggle */}
+      {/* 3. Habits Grid: Weekend Surge & Day-of-Week Analyzer + Time-of-Day + Top Merchants */}
+      <div className="habits-grid">
+        {/* Card 1: Weekend Surge & Day-of-Week Pattern */}
+        <div className="glass-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#06b6d4', fontWeight: 700 }}>
+              <Calendar size={16} /> Weekend Surge & Habits
+            </div>
+            <span className={`badge ${habits.weekendMultiplier > 1.4 ? 'badge-danger' : 'badge-connected'}`} style={{ padding: '0.15rem 0.5rem', fontSize: '0.68rem' }}>
+              {habits.weekendMultiplier > 1.0 ? `${habits.weekendMultiplier}x Weekend Surge` : 'Disciplined Weekend'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.82rem' }}>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Weekday: </span>
+              <strong style={{ color: 'var(--text-primary)' }}>₹{habits.weekdayAvg}/day</strong>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Weekend: </span>
+              <strong style={{ color: '#f43f5e' }}>₹{habits.weekendAvg}/day</strong>
+            </div>
+          </div>
+
+          <div style={{ height: '110px' }}>
+            <Bar data={dayOfWeekChartData} options={dayOfWeekOptions} />
+          </div>
+
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>
+            🔥 Peak spending day: <strong style={{ color: '#f43f5e' }}>{habits.peakDay?.day || 'Saturday'}</strong> (₹{habits.peakDay?.total || 0})
+          </div>
+        </div>
+
+        {/* Card 2: Time-of-Day Pattern */}
+        <div className="glass-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#10b981', fontWeight: 700 }}>
+            <Clock size={16} /> Time-of-Day Pattern
+          </div>
+          <div className="chart-container-sm" style={{ height: '140px' }}>
+            <Bar data={timeChartData} options={barChartOptions} />
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>
+            Shows when your UPI QR codes get scanned across the 24-hour cycle.
+          </div>
+        </div>
+
+        {/* Card 3: Top Merchants */}
+        <div className="glass-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#ec4899', fontWeight: 700 }}>
+            <Sparkles size={16} /> Top Merchants
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            {analytics.topMerchants && analytics.topMerchants.length > 0 ? (
+              analytics.topMerchants.slice(0, 4).map((m, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                    {m.merchant_name || m.merchant || 'UPI Merchant'}
+                  </span>
+                  <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>₹{parseFloat(m.total).toFixed(2)}</span>
+                </div>
+              ))
+            ) : (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No merchant spending yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Charts Grid (Daily Spending Timeline + Category Breakdown) */}
       <div className="charts-grid">
         <div className="glass-card">
           <div className="chart-header" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -606,7 +596,7 @@ export default function OverviewTab({ analytics, onWishlistUpdated, showToast })
         </div>
       </div>
 
-      {/* Row: Smart Micro-Spend Hub (< ₹100 Deep Dive) */}
+      {/* 5. Smart Micro-Spend Hub (< ₹100 Deep Dive) */}
       <div className="glass-card" style={{ marginBottom: '1.5rem', border: '1px solid rgba(245, 158, 11, 0.25)', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(15, 23, 42, 0.8) 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', fontWeight: 800, fontSize: '1.05rem' }}>
@@ -733,73 +723,83 @@ export default function OverviewTab({ analytics, onWishlistUpdated, showToast })
         </div>
       </div>
 
-      {/* Row: Weekend Surge & Day-of-Week Analyzer + Time-of-Day + Top Merchants */}
-      <div className="habits-grid">
-        {/* Card 1: Weekend Surge & Day-of-Week Pattern */}
-        <div className="glass-card">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#06b6d4', fontWeight: 700 }}>
-              <Calendar size={16} /> Weekend Surge & Habits
+      {/* 6. Auto-Fading Smart Tips Banner (Positioned at the very bottom) */}
+      {tips.length > 0 && activeTip && (
+        <div 
+          className="glass-card smart-tip-ticker"
+          style={{ 
+            marginBottom: '1.5rem', 
+            borderLeft: `4px solid ${getTipAccentColor(activeTip.type)}`,
+            padding: '1rem 1.25rem'
+          }}
+          onMouseEnter={() => setIsTipsPaused(true)}
+          onMouseLeave={() => setIsTipsPaused(false)}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Lightbulb size={16} style={{ color: '#fbbf24', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-cyan)' }}>
+                Smart AI Financial Tip
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                ({currentTipIndex + 1} of {tips.length})
+              </span>
             </div>
-            <span className={`badge ${habits.weekendMultiplier > 1.4 ? 'badge-danger' : 'badge-connected'}`} style={{ padding: '0.15rem 0.5rem', fontSize: '0.68rem' }}>
-              {habits.weekendMultiplier > 1.0 ? `${habits.weekendMultiplier}x Weekend Surge` : 'Disciplined Weekend'}
-            </span>
-          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.82rem' }}>
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Weekday: </span>
-              <strong style={{ color: 'var(--text-primary)' }}>₹{habits.weekdayAvg}/day</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div className="tip-dots">
+                {tips.map((_, idx) => (
+                  <span 
+                    key={idx}
+                    className={`tip-dot ${idx === currentTipIndex ? 'active' : ''}`}
+                    onClick={() => setCurrentTipIndex(idx)}
+                    title={`Jump to Tip ${idx + 1}`}
+                  />
+                ))}
+              </div>
+              <button 
+                type="button" 
+                className="btn-icon btn-secondary" 
+                style={{ width: '24px', height: '24px' }} 
+                onClick={handlePrevTip}
+                title="Previous Tip"
+              >
+                <ChevronLeft size={13} />
+              </button>
+              <button 
+                type="button" 
+                className="btn-icon btn-secondary" 
+                style={{ width: '24px', height: '24px' }} 
+                onClick={handleNextTip}
+                title="Next Tip"
+              >
+                <ChevronRight size={13} />
+              </button>
             </div>
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Weekend: </span>
-              <strong style={{ color: '#f43f5e' }}>₹{habits.weekendAvg}/day</strong>
+          </div>
+
+          <div 
+            className="tip-content-fade"
+            style={{ 
+              opacity: isTipFading ? 0 : 1, 
+              transform: isTipFading ? 'translateY(4px)' : 'translateY(0)',
+              transition: 'opacity 0.28s ease, transform 0.28s ease'
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>
+              {activeTip.title}
             </div>
-          </div>
-
-          <div style={{ height: '110px' }}>
-            <Bar data={dayOfWeekChartData} options={dayOfWeekOptions} />
-          </div>
-
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>
-            🔥 Peak spending day: <strong style={{ color: '#f43f5e' }}>{habits.peakDay?.day || 'Saturday'}</strong> (₹{habits.peakDay?.total || 0})
-          </div>
-        </div>
-
-        {/* Card 2: Time-of-Day Pattern */}
-        <div className="glass-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#10b981', fontWeight: 700 }}>
-            <Clock size={16} /> Time-of-Day Pattern
-          </div>
-          <div className="chart-container-sm" style={{ height: '140px' }}>
-            <Bar data={timeChartData} options={barChartOptions} />
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>
-            Shows when your UPI QR codes get scanned across the 24-hour cycle.
-          </div>
-        </div>
-
-        {/* Card 3: Top Merchants */}
-        <div className="glass-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#ec4899', fontWeight: 700 }}>
-            <Sparkles size={16} /> Top Merchants
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {analytics.topMerchants && analytics.topMerchants.length > 0 ? (
-              analytics.topMerchants.slice(0, 4).map((m, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                    {m.merchant_name || m.merchant || 'UPI Merchant'}
-                  </span>
-                  <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>₹{parseFloat(m.total).toFixed(2)}</span>
-                </div>
-              ))
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No merchant spending yet.</p>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, marginBottom: '0.4rem' }}>
+              {activeTip.message}
+            </div>
+            {activeTip.action && (
+              <div style={{ fontSize: '0.78rem', color: '#38bdf8', background: 'rgba(6, 182, 212, 0.08)', padding: '0.35rem 0.65rem', borderRadius: 'var(--radius-sm)', display: 'inline-block' }}>
+                💡 <strong>Action:</strong> {activeTip.action}
+              </div>
             )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Customize Wishlist Goal Modal */}
       {isGoalModalOpen && (

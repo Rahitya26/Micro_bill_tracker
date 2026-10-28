@@ -105,7 +105,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
       backdropFilter: 'blur(16px)',
       padding: '1.25rem'
     }}>
-      <div style={{
+      <div className="pin-modal-card" style={{
         background: 'linear-gradient(145deg, rgba(23, 32, 54, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
         border: '1px solid rgba(16, 185, 129, 0.25)',
         borderRadius: '24px',
@@ -121,7 +121,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
         animation: shake ? 'shake 0.4s ease-in-out' : 'none'
       }}>
         {/* Lock Icon */}
-        <div style={{
+        <div className="pin-modal-icon" style={{
           width: '64px',
           height: '64px',
           borderRadius: '20px',
@@ -207,6 +207,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
             <button
               key={num}
               type="button"
+              className="pin-keypad-btn"
               onClick={() => {
                 handleDigit(String(num));
                 if (pin.length === 3) {
@@ -241,6 +242,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
           {/* Clear button */}
           <button
             type="button"
+            className="pin-keypad-btn"
             onClick={handleClear}
             disabled={loading}
             style={{
@@ -264,6 +266,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
           {/* 0 digit */}
           <button
             type="button"
+            className="pin-keypad-btn"
             onClick={() => {
               handleDigit('0');
               if (pin.length === 3) {
@@ -296,6 +299,7 @@ export default function PinLockModal({ isOpen, onUnlock, showToast }) {
           {/* Backspace button */}
           <button
             type="button"
+            className="pin-keypad-btn"
             onClick={handleBackspace}
             disabled={loading}
             style={{

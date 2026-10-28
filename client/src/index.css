@@ -1357,3 +1357,151 @@ canvas {
   width: 14px;
   border-radius: 999px;
 }
+
+/* ==============================================================================
+   Compact Mobile View Optimization (Decreases box & modal heights for less scroll)
+   ============================================================================== */
+@media (max-width: 640px) {
+  .app-container {
+    padding: 0.65rem 0.65rem 5.5rem 0.65rem;
+  }
+
+  .glass-card {
+    padding: 0.85rem 0.9rem !important;
+    margin-bottom: 0.85rem !important;
+    border-radius: var(--radius-md);
+  }
+
+  /* Compact 3-in-1 Row for KPI Metric Cards */
+  .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .metric-card {
+    padding: 0.65rem 0.45rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .metric-label {
+    font-size: 0.66rem !important;
+    margin-bottom: 0.25rem !important;
+    gap: 0.2rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .metric-val {
+    font-size: 1.05rem !important;
+    margin-bottom: 0.15rem !important;
+  }
+
+  .metric-sub {
+    font-size: 0.64rem !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Compact Chart Heights */
+  .chart-container {
+    height: 175px !important;
+  }
+
+  .chart-container-sm {
+    height: 125px !important;
+  }
+
+  .chart-header {
+    margin-bottom: 0.65rem !important;
+  }
+
+  .chart-title {
+    font-size: 0.95rem !important;
+  }
+
+  /* Compact Hero Banner */
+  .hero-card {
+    margin-bottom: 0.85rem !important;
+  }
+
+  .hero-title {
+    font-size: 1.15rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .hero-sub {
+    font-size: 0.74rem !important;
+    margin-bottom: 0.65rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .remaining-budget-box {
+    padding: 0.65rem 0.85rem !important;
+    margin-top: 0.65rem !important;
+  }
+
+  .remaining-budget-val {
+    font-size: 1.45rem !important;
+    margin: 0.15rem 0 !important;
+  }
+
+  /* Compact Micro Spend Hub */
+  .micro-hub-grid {
+    gap: 0.65rem !important;
+  }
+
+  .micro-hub-col > div {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .split-pill {
+    padding: 0.5rem 0.65rem !important;
+  }
+
+  /* Compact Smart Tips Ticker */
+  .smart-tip-ticker {
+    padding: 0.75rem 0.85rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Compact Modals */
+  .modal-overlay {
+    padding: 0.65rem !important;
+  }
+
+  .modal-content {
+    padding: 1.15rem 0.95rem !important;
+    border-radius: var(--radius-md) !important;
+    max-height: 88vh !important;
+  }
+
+  .modal-header {
+    margin-bottom: 0.85rem !important;
+  }
+
+  .form-group {
+    margin-bottom: 0.85rem !important;
+  }
+
+  /* Compact PIN Lock Screen */
+  .pin-modal-card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 20px !important;
+    max-width: 320px !important;
+  }
+
+  .pin-keypad-btn {
+    height: 48px !important;
+    font-size: 1.2rem !important;
+    border-radius: 12px !important;
+  }
+
+  .pin-modal-icon {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    margin-bottom: 0.65rem !important;
+  }
+}
+
