@@ -426,35 +426,41 @@ export default function OverviewTab({ analytics, onWishlistUpdated, showToast })
         </div>
       </div>
 
-      {/* 2. KPI Metrics Grid (Spent this month, daily burn rate, micro spends) */}
-      <div className="metrics-grid">
-        <div className="glass-card metric-card">
+      {/* 2. Unified KPI Summary Hub (Single large box with Spent This Month full width, and 50/50 split below on mobile) */}
+      <div className="glass-card kpi-unified-card">
+        <div className="kpi-top-section">
           <div className="metric-label">
             <span>Spent This Month</span>
             <TrendingUp size={16} style={{ color: '#10b981' }} />
           </div>
-          <div className="metric-val">₹{Math.round(summary.totalSpentMonth).toLocaleString('en-IN')}</div>
+          <div className="metric-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0.25rem 0' }}>
+            ₹{Math.round(summary.totalSpentMonth).toLocaleString('en-IN')}
+          </div>
           <div className="metric-sub">{summary.totalTransactionsMonth || 0} total transactions</div>
         </div>
 
-        <div className="glass-card metric-card">
-          <div className="metric-label">
-            <span>Daily Burn Rate</span>
-            <Clock size={16} style={{ color: '#06b6d4' }} />
+        <div className="kpi-bottom-section">
+          <div className="kpi-sub-item">
+            <div className="metric-label">
+              <span>Daily Burn Rate</span>
+              <Clock size={15} style={{ color: '#06b6d4' }} />
+            </div>
+            <div className="metric-val" style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0.2rem 0' }}>
+              ₹{Math.round(summary.dailyAverage)}<span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-muted)' }}>/day</span>
+            </div>
+            <div className="metric-sub">Daily consumption pace</div>
           </div>
-          <div className="metric-val">₹{Math.round(summary.dailyAverage)}<span style={{ fontSize: '1rem', fontWeight: 400 }}>/day</span></div>
-          <div className="metric-sub">Average daily consumption</div>
-        </div>
 
-        <div className="glass-card metric-card">
-          <div className="metric-label">
-            <span>Micro-Spends (&lt; ₹100)</span>
-            <Coffee size={16} style={{ color: '#f59e0b' }} />
+          <div className="kpi-sub-item kpi-sub-item-right">
+            <div className="metric-label">
+              <span>Micro-Spends (&lt; ₹100)</span>
+              <Coffee size={15} style={{ color: '#f59e0b' }} />
+            </div>
+            <div className="metric-val" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b', margin: '0.2rem 0' }}>
+              {microSpends.count ?? 0} <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>txns</span>
+            </div>
+            <div className="metric-sub">₹{Math.round(microSpends.total ?? 0)} in quick taps</div>
           </div>
-          <div className="metric-val" style={{ color: '#f59e0b' }}>
-            {microSpends.count ?? 0} <span style={{ fontSize: '1rem', fontWeight: 500 }}>txns</span>
-          </div>
-          <div className="metric-sub">₹{Math.round(microSpends.total ?? 0)} in quick QR taps</div>
         </div>
       </div>
 
